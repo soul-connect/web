@@ -6,7 +6,7 @@ import { auth, db, storage } from "@/lib/firebase";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { useState, useRef, useEffect } from "react";
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import { UserList } from "./UserList";
@@ -15,6 +15,7 @@ import { MdPermMedia } from "react-icons/md";
 import { RiAiGenerate2 } from "react-icons/ri";
 import { IoCall, IoVideocam } from "react-icons/io5";
 import EmojiPicker from "emoji-picker-react"; // Import the emoji picker
+import Image from "next/image";
 
 export function Chat() {
   const [user] = useAuthState(auth);
@@ -26,7 +27,7 @@ export function Chat() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [showTooltip, setShowTooltip] = useState(false); // Tooltip state
   const [showEmojiPicker, setShowEmojiPicker] = useState(false); // State to toggle emoji picker
-  const [messages, loading, error] = useCollection(
+  const [messages, loading] = useCollection(
     selectedUser && user?.uid
       ? query(
           collection(db, "messages"),
@@ -153,7 +154,7 @@ export function Chat() {
     }, 4000);
   };
 
-  const handleEmojiClick = (emojiObject: any) => {
+  const handleEmojiClick = (emojiObject: { emoji: string }) => {
     setMessage((prev) => prev + emojiObject.emoji); // Append the selected emoji to the message
     setShowEmojiPicker(false); // Close the emoji picker
   };
@@ -212,7 +213,7 @@ export function Chat() {
                     console.log("Hii message sent!");
                   }}
                 >
-                  Say "Hii" <span className="inline-block animate-shake">👋🏻</span> and show some love to your pockie
+                  Say &quot;Hii&quot; <span className="inline-block animate-shake">👋🏻</span> and show some love to your pockie
                 </div>
               ) : (
                 messages?.docs.map((doc) => {
@@ -235,10 +236,12 @@ export function Chat() {
                       >
                         {data.text && <p className="text-sm">{data.text}</p>}
                         {data.mediaUrl && (
-                          <img
+                          <Image
                             src={data.mediaUrl}
-                            className="max-w-full mt-2 rounded"
                             alt="Shared media"
+                            width={500}
+                            height={500}
+                            className="max-w-full mt-2 rounded"
                           />
                         )}
                         <small className="block mt-1 text-xs opacity-75">

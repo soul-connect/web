@@ -4,17 +4,27 @@ import { auth, db } from "@/lib/firebase";
 import { collection, query, where, onSnapshot, getDocs } from "firebase/firestore";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { User as FirebaseUser } from "firebase/auth";
+
+type User = {
+  uid: string;
+  displayName: string;
+  photoURL: string;
+};
 
 export function UserList({ onSelectUser, className }: { onSelectUser: (userId: string) => void; className?: string }) {
-  const [users, setUsers] = useState<any[]>([]);
-  const [currentUser, setCurrentUser] = useState<any>(null);
-  const [unseenCounts, setUnseenCounts] = useState<{ [key: string]: number }>({}); // Track unseen messages
+  const [users, setUsers] = useState<User[]>([]);
+  const [currentUser, setCurrentUser] = useState<FirebaseUser | null>(null);
+  const [unseenCounts, setUnseenCounts] = useState<{ [key: string]: number }>({});
 
   useEffect(() => {
     const fetchUsers = async () => {
       const usersSnapshot = await getDocs(collection(db, "users"));
-      const users = usersSnapshot.docs.map((doc) => ({ uid: doc.id, ...doc.data() }));
-      setUsers(users.filter((u: any) => u.uid !== currentUser?.uid));
+      const users = usersSnapshot.docs.map((doc) => ({
+        // uid: doc.id,
+        ...(doc.data() as User),
+      }));
+      setUsers(users.filter((u) => u.uid !== currentUser?.uid));
     };
 
     const unsubscribeAuth = auth.onAuthStateChanged((user) => {
@@ -28,7 +38,6 @@ export function UserList({ onSelectUser, className }: { onSelectUser: (userId: s
   useEffect(() => {
     if (!currentUser) return;
 
-    // Listen for unseen messages for each user
     const unsubscribe = onSnapshot(
       query(collection(db, "messages"), where("receiverId", "==", currentUser.uid), where("seen", "==", false)),
       (snapshot) => {
@@ -38,11 +47,10 @@ export function UserList({ onSelectUser, className }: { onSelectUser: (userId: s
           const senderId = data.senderId;
           counts[senderId] = (counts[senderId] || 0) + 1;
 
-          // Push notification for new unseen messages
           if (Notification.permission === "granted") {
             new Notification("New Message", {
               body: `You have a new message from ${data.senderName}`,
-              icon: "/icons/icon-192x192.png"
+              icon: "/icons/icon-192x192.png",
             });
           }
         });
