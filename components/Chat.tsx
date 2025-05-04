@@ -23,6 +23,7 @@ export function Chat() {
   const [selectedUser, setSelectedUser] = useState<string | null>(null);
   const [selectedUserName, setSelectedUserName] = useState<string | null>(null); // Store selected user's name
   const [isChatView, setIsChatView] = useState(false); // Toggle between screens
+  const [isKeyboardOpen, setIsKeyboardOpen] = useState(false); // Track keyboard visibility
   const scrollAreaRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [showTooltip, setShowTooltip] = useState(false); // Tooltip state
@@ -113,6 +114,18 @@ export function Chat() {
 
     return () => unsubscribe();
   }, [user]);
+
+  useEffect(() => {
+    const handleResize = () => {
+      // Check if the viewport height is reduced (keyboard is open)
+      setIsKeyboardOpen(window.innerHeight < window.outerHeight * 0.7);
+    };
+
+    window.addEventListener("resize", handleResize);
+    handleResize(); // Call it initially to set the correct state
+
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
 
   const sendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -256,7 +269,9 @@ export function Chat() {
           </ScrollArea>
           <form
             onSubmit={sendMessage}
-            className="p-4 border-t flex gap-2 items-center sticky bottom-0 bg-background"
+            className={`p-4 border-t flex gap-2 items-center sticky ${
+              isKeyboardOpen ? "bottom-20" : "bottom-0"
+            } bg-background transition-all duration-300`}
           >
             <div className="relative">
               <Button
